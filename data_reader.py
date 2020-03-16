@@ -12,6 +12,7 @@ import torch
 from util import config, normalize_string
 from vocab import Voc, EOS_TOKEN, PAD_TOKEN
 
+SAMPLE_SIZE = int(config()['data']['samples'])
 MAX_LENGTH = int(config()['DEFAULT']['MAX_LENGTH'])
 DATA_PATH = config()['data']['data_path']
 
@@ -24,7 +25,7 @@ def read_vocs(datafile: str, corpus_name: str) -> (Voc, List[List[str]]):
 
     pairs = []
     with open(datafile, 'r', encoding='utf-8') as f:
-        for line in f:
+        for line in f[:SAMPLE_SIZE+1]:
             line = line.strip()
             line = line.split('+++$+++')
             pairs.append([

@@ -5,3 +5,6 @@
 
 *.tar
 *.ptmodel
+
+*.train
+data/

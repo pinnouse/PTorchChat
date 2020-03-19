@@ -35,10 +35,10 @@ def read_file(file_name):
     """Reads a file thing"""
     lines = []
     with open(os.path.join(os.path.dirname(__file__),
-                           config()['data']['data_path'] + file_name), 'r',
+                           config()['data']['data_path'], file_name), 'r',
               encoding='utf-8') as f:
         line = f.readline().strip()
         while line:
-            lines.append(line)
+            lines.append(line.lower())
             line = f.readline().strip()
     return lines

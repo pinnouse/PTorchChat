@@ -29,6 +29,8 @@ class Voc:
         Takes in a sentence and adds the words of the sentence into the vocab.
         """
         for word in sentence.split(' '):
+            if word not in ["UNK", "SOS", "EOS", "PAD"]:
+                word = word.lower()
             self.add_word(word)
 
     def add_word(self, word: str) -> None:

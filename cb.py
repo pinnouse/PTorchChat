@@ -11,7 +11,7 @@ from torch import nn, optim
 ### LOAD CORPUS
 import corpus_composer
 import data_reader
-from util import config
+from util import config, normalize_string
 
 import model
 
@@ -46,10 +46,10 @@ batch_size = int(config()['DEFAULT']['batch_size'])
 
 # Set checkpoint to load from; set to None if starting from scratch
 # load_file_name = None
-checkpoint_iter = 5000
-save_dir = 'save/'
+checkpoint_iter = 100000
+save_dir = config()['DEFAULT']['save_dir']
 load_file_name = \
-    os.path.join(save_dir, model_name, corpus_name,
+    os.path.join(os.path.dirname(__file__), save_dir, model_name, corpus_name,
                  f'{encoder_n_layers}-{decoder_n_layers}_{HIDDEN_SIZE}',
                  f'{checkpoint_iter}_checkpoint.ptmodel')
 
@@ -98,36 +98,36 @@ if load_file_name:
     encoder_optimizer.load_state_dict(encoder_optimizer_sd)
     decoder_optimizer.load_state_dict(decoder_optimizer_sd)
 
-for state in encoder_optimizer.state.values():
-    for k, v in state.items():
-        if isinstance(v, torch.Tensor):
-            state[k] = v.cuda()
+if USE_CUDA:
+    for state in encoder_optimizer.state.values():
+        for k, v in state.items():
+            if isinstance(v, torch.Tensor):
+                state[k] = v.cuda()
 
-for state in decoder_optimizer.state.values():
-    for k, v in state.items():
-        if isinstance(v, torch.Tensor):
-            state[k] = v.cuda()
-
-save_dir = config()['DEFAULT']['save_dir']
-print('Training iters ...')
-# Run training iterations
-model.train_iters(
-    model_name, voc, pairs, encoder, decoder, encoder_optimizer,
-    decoder_optimizer, embedding, encoder_n_layers, decoder_n_layers, save_dir,
-    n_iteration, batch_size, print_every, save_every, clip, corpus_name,
-    load_file_name
-)
+    for state in decoder_optimizer.state.values():
+        for k, v in state.items():
+            if isinstance(v, torch.Tensor):
+                state[k] = v.cuda()
 
 searcher = GreedySearchDecoder(encoder, decoder)
 
-
 def eval_sentence(sentence: str) -> str:
     output_words = model.evaluate(encoder, decoder, searcher, voc,
-                                  sentence)
+                                  normalize_string(sentence))
     output_words[:] = [x for x in output_words if not (x == 'EOS' or
                                                        x == 'PAD')]
     return ' '.join(output_words)
 
 
 if __name__ == "__main__":
+    # Run training iterations
+    print('Training iters ...')
+    model.train_iters(
+        model_name, voc, pairs, encoder, decoder, encoder_optimizer,
+        decoder_optimizer, embedding, encoder_n_layers, decoder_n_layers, save_dir,
+        n_iteration, batch_size, print_every, save_every, clip, corpus_name,
+        load_file_name
+    )
+
+    searcher = GreedySearchDecoder(encoder, decoder)
     model.evaluate_input(encoder, decoder, searcher, voc)

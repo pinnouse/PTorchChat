@@ -20,6 +20,6 @@ def normalize_string(string_to_normalize: str) -> str:
     Takes an input string and normalizes it to a uniform understanding for
     Python.
     """
-    string_to_normalize = re.sub(r"([.!?])", r" \1", string_to_normalize)
+    string_to_normalize = re.sub(r"([.!?:()][\\s]*)", r" \1 ", string_to_normalize)
     string_to_normalize = re.sub(r"\s+", r" ", string_to_normalize).strip()
-    return string_to_normalize
+    return string_to_normalize.lower()

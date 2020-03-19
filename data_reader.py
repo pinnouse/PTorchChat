@@ -10,9 +10,8 @@ import itertools
 import torch
 
 from util import config, normalize_string
-from vocab import Voc, EOS_TOKEN, PAD_TOKEN
+from vocab import Voc, EOS_TOKEN, PAD_TOKEN, UNK_TOKEN
 
-SAMPLE_SIZE = int(config()['data']['samples'])
 MAX_LENGTH = int(config()['DEFAULT']['MAX_LENGTH'])
 DATA_PATH = config()['data']['data_path']
 
@@ -24,14 +23,18 @@ def read_vocs(datafile: str, corpus_name: str) -> (Voc, List[List[str]]):
     print(f"Reading lines from {datafile}...")
 
     pairs = []
+    SAMPLE_SIZE = int(config()['data']['samples'])
     with open(datafile, 'r', encoding='utf-8') as f:
-        for line in f[:SAMPLE_SIZE+1]:
-            line = line.strip()
+        for line in f:
+            line = line.strip().lower()
             line = line.split('+++$+++')
             pairs.append([
                 normalize_string(line[0]),
                 normalize_string(line[1])
             ])
+            SAMPLE_SIZE -= 1
+            if SAMPLE_SIZE <= 0:
+                break
 
     voc = Voc(corpus_name)
     return voc, pairs
@@ -82,7 +85,7 @@ def load_prepare_data(corpus_name: str, datafile: str, save_dir: str = "") \
 # voc, pairs = load_prepare_data()
 
 def indeces_from_sentence(voc: Voc, sentence: str) -> List[str]:
-    return [voc.word2index[word if word in voc.word2index else "UNK"] \
+    return [voc.word2index[word.lower()] if word.lower() in voc.word2index else UNK_TOKEN \
             for word in sentence.split(' ')] + [EOS_TOKEN]
 
 

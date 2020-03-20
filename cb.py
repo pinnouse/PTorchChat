@@ -45,8 +45,8 @@ dropout = float(config()['DEFAULT']['dropout'])
 batch_size = int(config()['DEFAULT']['batch_size'])
 
 # Set checkpoint to load from; set to None if starting from scratch
-# load_file_name = None
-checkpoint_iter = 100000
+load_file_name = None
+checkpoint_iter = 10000
 save_dir = config()['DEFAULT']['save_dir']
 load_file_name = \
     os.path.join(os.path.dirname(__file__), save_dir, model_name, corpus_name,

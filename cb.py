@@ -4,7 +4,7 @@ Main chatbot entrypoint.
 import os
 import sys
 
-sys.path.insert(1, 'model')
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'model'))
 ### PYTORCH
 import torch
 from torch import nn, optim
@@ -25,7 +25,7 @@ if not os.path.exists(os.path.join(
         config()['data']['data_path'], corpus_name + '.train')):
     corpus_composer.build_set(corpus_name)
 voc, pairs = data_reader.load_prepare_data(corpus_name,
-                                           f'data/{corpus_name}.train')
+                                           os.path.join(os.path.dirname(__file__), 'data', f'{corpus_name}.train'))
 
 USE_CUDA = torch.cuda.is_available()
 DEVICE = torch.device("cuda" if USE_CUDA else "cpu")
@@ -45,13 +45,13 @@ dropout = float(config()['DEFAULT']['dropout'])
 batch_size = int(config()['DEFAULT']['batch_size'])
 
 # Set checkpoint to load from; set to None if starting from scratch
-# load_file_name = None
-checkpoint_iter = 100000
+load_file_name = None
+checkpoint_iter = 10000
 save_dir = config()['DEFAULT']['save_dir']
-load_file_name = \
-    os.path.join(os.path.dirname(__file__), save_dir, model_name, corpus_name,
-                 f'{encoder_n_layers}-{decoder_n_layers}_{HIDDEN_SIZE}',
-                 f'{checkpoint_iter}_checkpoint.ptmodel')
+# load_file_name = \
+#     os.path.join(os.path.dirname(__file__), save_dir, model_name, corpus_name,
+#                  f'{encoder_n_layers}-{decoder_n_layers}_{HIDDEN_SIZE}',
+#                  f'{checkpoint_iter}_checkpoint.ptmodel')
 
 if load_file_name:
     checkpoint = torch.load(load_file_name)
@@ -111,6 +111,22 @@ if USE_CUDA:
 
 searcher = GreedySearchDecoder(encoder, decoder)
 
+def train():
+    # Run training iterations
+    print('Training iters ...')
+    model.train_iters(
+        model_name, voc, pairs, encoder, decoder, encoder_optimizer,
+        decoder_optimizer, embedding, encoder_n_layers, decoder_n_layers, save_dir,
+        n_iteration, batch_size, print_every, save_every, clip, corpus_name,
+        load_file_name
+    )
+    
+    # Put them in eval mode
+    encoder.eval()
+    decoder.eval()
+
+    searcher = GreedySearchDecoder(encoder, decoder)
+
 def eval_sentence(sentence: str) -> str:
     output_words = model.evaluate(encoder, decoder, searcher, voc,
                                   normalize_string(sentence))
@@ -120,14 +136,5 @@ def eval_sentence(sentence: str) -> str:
 
 
 if __name__ == "__main__":
-    # Run training iterations
-    print('Training iters ...')
-    model.train_iters(
-        model_name, voc, pairs, encoder, decoder, encoder_optimizer,
-        decoder_optimizer, embedding, encoder_n_layers, decoder_n_layers, save_dir,
-        n_iteration, batch_size, print_every, save_every, clip, corpus_name,
-        load_file_name
-    )
-
-    searcher = GreedySearchDecoder(encoder, decoder)
+    train()
     model.evaluate_input(encoder, decoder, searcher, voc)

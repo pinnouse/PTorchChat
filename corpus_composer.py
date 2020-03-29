@@ -20,7 +20,7 @@ def build_set(name):
     for i in range(min(len(CORPUS_FILES[0]), len(CORPUS_FILES[1]))):
         with open(os.path.join(
                 os.path.dirname(__file__),
-                config()['data']['data_path'] + name + '.train'), 'a',
+                config()['data']['data_path'], name + '.train'), 'a',
                 encoding='utf-8') \
                 as corpus_file:
 
